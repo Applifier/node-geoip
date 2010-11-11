@@ -4,12 +4,12 @@ var sys = require('sys'),
 con = new ceoip.Connection();
 con.addListener('connected', function () {
   con.addListener('result', function(result) {
-    for (var attr in result) {
-      sys.puts(attr + ' : ' + result[attr]);
-    }
+    sys.puts(result);
+
   });
   var ip = '216.236.135.152';
   sys.puts('Looking up ip: ' + ip + '...\n');
-  con.query(ip);
+  con.queryCountryCodeByIP(ip);
+  con.queryCountryCodeByIP("212.226.93.81");
 });
-con.connect('/usr/local/share/GeoIP/GeoLiteCity.dat');
+con.connect('/usr/local/share/GeoIP/GeoIP.dat');

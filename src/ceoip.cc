@@ -31,6 +31,7 @@ class Connection : public EventEmitter {
       NODE_SET_PROTOTYPE_METHOD(t, "connect", Connect);
       NODE_SET_PROTOTYPE_METHOD(t, "close", Close);
       NODE_SET_PROTOTYPE_METHOD(t, "query", Query);
+      NODE_SET_PROTOTYPE_METHOD(t, "queryCountryCodeByIP", QueryCountryCodeByIP);
 
       target->Set(String::NewSymbol("Connection"), t->GetFunction());
     }
@@ -38,7 +39,7 @@ class Connection : public EventEmitter {
     void Connect(const char *dbpath) {
       HandleScope scope;
 
-      gi = GeoIP_open(dbpath, GEOIP_INDEX_CACHE);
+      gi = GeoIP_open(dbpath, GEOIP_MEMORY_CACHE);
 
       Emit((gi ? connected_symbol : error_symbol), 0, NULL);
     }
@@ -68,6 +69,17 @@ class Connection : public EventEmitter {
       } else {
         Emit(result_symbol, 0, NULL);
       }
+    }
+
+    void QueryCountryCodeByAddr(const char *query) {
+		HandleScope scope;
+
+		assert(gi);
+		const char *code = GeoIP_country_code_by_addr(gi, query);
+		
+        Local<Value> result = String::New(code);
+        Emit(result_symbol, 1, &result);
+
     }
 
   protected:
@@ -119,6 +131,23 @@ class Connection : public EventEmitter {
 
       Connection *connection = ObjectWrap::Unwrap<Connection>(args.This());
       connection->Query(*query);
+
+      return Undefined();
+    }
+
+    static Handle<Value> QueryCountryCodeByIP(const Arguments &args) {
+      HandleScope scope;
+
+      if (args.Length() < 1 || !args[0]->IsString()) {
+        return ThrowException(
+                Exception::TypeError(
+                    String::New("Required argument: ip address.")));
+      }
+
+      String::Utf8Value query(args[0]->ToString());
+
+      Connection *connection = ObjectWrap::Unwrap<Connection>(args.This());
+      connection->QueryCountryCodeByAddr(*query);
 
       return Undefined();
     }
