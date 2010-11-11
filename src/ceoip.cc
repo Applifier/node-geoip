@@ -76,9 +76,13 @@ class Connection : public EventEmitter {
 
 		assert(gi);
 		const char *code = GeoIP_country_code_by_addr(gi, query);
-		
-        Local<Value> result = String::New(code);
-        Emit(result_symbol, 1, &result);
+
+		if (code == NULL) {
+			Emit(result_symbol, 0, NULL);
+		} else {
+	        Local<Value> result = String::New(code);
+	        Emit(result_symbol, 1, &result);	
+		}
 
     }
 
